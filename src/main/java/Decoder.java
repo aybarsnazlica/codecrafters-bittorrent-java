@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Decoder {
     private int index = 0;
@@ -33,6 +34,18 @@ public class Decoder {
             index++;
 
             return list;
+        } else if (firstChar == 'd') {
+            index++;
+
+            HashMap<Object, Object> map = new HashMap<>();
+
+            while (bencodedString.charAt(index) != 'e') {
+                map.put(decode(bencodedString), decode(bencodedString));
+            }
+
+            index++;
+
+            return map;
         } else {
             throw new RuntimeException("Invalid bencoded string");
         }
