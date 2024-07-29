@@ -4,50 +4,67 @@ import java.util.HashMap;
 public class Decoder {
     private int index = 0;
 
-    public Object decode(String bencodedString) {
-        char firstChar = bencodedString.charAt(index);
+    public Object decode(byte[] bencodedData) {
+        char currentChar = (char) bencodedData[index];
 
-        if (Character.isDigit(firstChar)) {
-            int colonIndex = bencodedString.indexOf(':', index);
-            int length = Integer.parseInt(bencodedString.substring(index, colonIndex));
-            int start = colonIndex + 1;
-
-            index = start + length;
-
-            return bencodedString.substring(start, start + length);
-        } else if (firstChar == 'i') {
-            int endIndex = bencodedString.indexOf('e', index);
-            long number = Long.parseLong(bencodedString.substring(index + 1, endIndex));
-
-            index = endIndex + 1;
-
-            return number;
-        } else if (firstChar == 'l') {
-            index++;
-
-            ArrayList<Object> list = new ArrayList<>();
-
-            while (bencodedString.charAt(index) != 'e') {
-                list.add(decode(bencodedString));
-            }
-
-            index++;
-
-            return list;
-        } else if (firstChar == 'd') {
-            index++;
-
-            HashMap<Object, Object> map = new HashMap<>();
-
-            while (bencodedString.charAt(index) != 'e') {
-                map.put(decode(bencodedString), decode(bencodedString));
-            }
-
-            index++;
-
-            return map;
+        if (Character.isDigit(currentChar)) {
+            return decodeString(bencodedData);
+        } else if (currentChar == 'i') {
+            return decodeInteger(bencodedData);
+        } else if (currentChar == 'l') {
+            return decodeList(bencodedData);
+        } else if (currentChar == 'd') {
+            return decodeMap(bencodedData);
         } else {
-            throw new RuntimeException("Invalid bencoded string");
+            throw new RuntimeException("Invalid bencoded data at index " + index + ": " + currentChar);
         }
+    }
+
+    private String decodeString(byte[] bencodedData) {
+        int colonIndex = index;
+        while (bencodedData[colonIndex] != ':') {
+            colonIndex++;
+        }
+
+        int length = Integer.parseInt(new String(bencodedData, index, colonIndex - index));
+        index = colonIndex + 1;
+        String result = new String(bencodedData, index, length);
+        index += length;
+
+        return result;
+    }
+
+    private Long decodeInteger(byte[] bencodedData) {
+        index++; // skip 'i'
+        int endIndex = index;
+        while (bencodedData[endIndex] != 'e') {
+            endIndex++;
+        }
+
+        Long number = Long.parseLong(new String(bencodedData, index, endIndex - index));
+        index = endIndex + 1; // skip 'e'
+        return number;
+    }
+
+    private ArrayList<Object> decodeList(byte[] bencodedData) {
+        index++; // skip 'l'
+        ArrayList<Object> list = new ArrayList<>();
+        while (bencodedData[index] != 'e') {
+            list.add(decode(bencodedData));
+        }
+        index++; // skip 'e'
+        return list;
+    }
+
+    private HashMap<String, Object> decodeMap(byte[] bencodedData) {
+        index++; // skip 'd'
+        HashMap<String, Object> map = new HashMap<>();
+        while (bencodedData[index] != 'e') {
+            String key = (String) decode(bencodedData);
+            Object value = decode(bencodedData);
+            map.put(key, value);
+        }
+        index++; // skip 'e'
+        return map;
     }
 }
