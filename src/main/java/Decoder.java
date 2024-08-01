@@ -56,12 +56,30 @@ public class Decoder {
         return list;
     }
 
+    private byte[] decodeByteString(byte[] bencodedData) {
+        int colonIndex = index;
+        while (bencodedData[colonIndex] != ':') {
+            colonIndex++;
+        }
+        int length = Integer.parseInt(new String(bencodedData, index, colonIndex - index));
+        index = colonIndex + 1;
+        byte[] result = new byte[length];
+        System.arraycopy(bencodedData, index, result, 0, length);
+        index += length;
+        return result;
+    }
+
     private HashMap<String, Object> decodeMap(byte[] bencodedData) {
         index++; // skip 'd'
         HashMap<String, Object> map = new HashMap<>();
         while (bencodedData[index] != 'e') {
             String key = (String) decode(bencodedData);
-            Object value = decode(bencodedData);
+            Object value;
+            if (key.equals("pieces")) {
+                value = decodeByteString(bencodedData);
+            } else {
+                value = decode(bencodedData);
+            }
             map.put(key, value);
         }
         index++; // skip 'e'

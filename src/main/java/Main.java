@@ -2,6 +2,7 @@ import com.google.gson.Gson;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 
 
 public class Main {
@@ -22,13 +23,28 @@ public class Main {
 
         } else if ("info".equals(command)) {
             try {
-                Torrent torrent = new Torrent(Files.readAllBytes(Path.of(args[1])));
+                byte[] fileContent = Files.readAllBytes(Path.of(args[1]));
+                Torrent torrent = new Torrent(fileContent);
 
                 String announce = String.valueOf(torrent.root.get("announce"));
                 Long length = (Long) torrent.info.get("length");
 
                 System.out.println("Tracker URL: " + announce);
                 System.out.println("Length: " + length);
+
+                Encoder encoder = new Encoder();
+                byte[] bencoded = encoder.encode(torrent.info);
+
+                MessageDigest md = MessageDigest.getInstance("SHA-1");
+                md.update(bencoded);
+                byte[] digest = md.digest();
+
+                StringBuilder hexString = new StringBuilder();
+                for (byte b : digest) {
+                    hexString.append(String.format("%02x", b));
+                }
+
+                System.out.println("Info Hash: " + hexString);
             } catch (RuntimeException e) {
                 System.out.println(e.getMessage());
             }
