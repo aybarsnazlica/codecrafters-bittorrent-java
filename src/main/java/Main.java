@@ -45,6 +45,17 @@ public class Main {
                 }
 
                 System.out.println("Info Hash: " + hexString);
+                System.out.println("Piece Length: " + torrent.info.get("piece length"));
+                System.out.println("Piece Hashes: ");
+
+                byte[] pieces = (byte[]) torrent.info.get("pieces");
+                StringBuilder pieces_hex = new StringBuilder();
+
+                for (byte b : pieces) {
+                    pieces_hex.append(String.format("%02x", b));
+                }
+                System.out.println(pieces_hex);
+
             } catch (RuntimeException e) {
                 System.out.println(e.getMessage());
             }
